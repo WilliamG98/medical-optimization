@@ -135,7 +135,6 @@ u1.metric("P05 Saving", f"{mc['p05_saving']:.1f} min")
 u2.metric("P50 Saving", f"{mc['p50_saving']:.1f} min")
 u3.metric("P95 Saving", f"{mc['p95_saving']:.1f} min")
 
-st.subheader("Recommended Reassignments")
 show_cols = [
     "case_id",
     "date",
@@ -150,7 +149,6 @@ show_cols = [
     "move_recommended",
 ]
 reco_view = reco[show_cols].sort_values(["move_recommended", "pred_saving_minutes"], ascending=[False, False])
-st.dataframe(reco_view, use_container_width=True)
 
 st.subheader("What Could Be Changed In The Given Schedule")
 base_change_cols = [
@@ -194,29 +192,6 @@ optimized_schedule = schedule_compare[optimized_schedule_cols].sort_values(
     ["date", "optimized_doctor", "optimized_position", "case_id"]
 )
 st.dataframe(optimized_schedule, use_container_width=True)
-
-st.subheader("Daily Reassignment Plan")
-daily_plan = (
-    reco.assign(date_only=reco["date"].dt.date)
-    .groupby(["date_only", "recommended_doctor"], as_index=False)
-    .agg(
-        cases=("case_id", "count"),
-        total_pred_saving=("pred_saving_minutes", "sum"),
-    )
-)
-st.dataframe(daily_plan.sort_values(["date_only", "cases"], ascending=[True, False]), use_container_width=True)
-
-st.subheader("Daily Baseline vs Optimized Minutes")
-daily_compare = (
-    schedule_compare.assign(date_only=schedule_compare["date"].dt.date)
-    .groupby("date_only", as_index=False)
-    .agg(
-        baseline_minutes=("baseline_minutes", "sum"),
-        optimized_minutes=("optimized_minutes", "sum"),
-    )
-)
-daily_compare["saving_minutes"] = daily_compare["baseline_minutes"] - daily_compare["optimized_minutes"]
-st.dataframe(daily_compare.sort_values("date_only"), use_container_width=True)
 
 csv_bytes = reco_view.to_csv(index=False).encode("utf-8")
 changes_csv = change_view.to_csv(index=False).encode("utf-8")
